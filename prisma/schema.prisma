@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  passwordHash     String
+  role             String    @default("EDITOR") // ADMIN | EDITOR
+  active           Boolean   @default(true)
+  sessionVersion   Int       @default(0)
+  resetTokenHash   String?   @unique
+  resetTokenExpiry DateTime?
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  posts     Post[]
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id             String      @id @default(cuid())
+  title          String
+  subtitle       String?
+  slug           String      @unique
+  excerpt        String?
+  content        String      @default("")
+  coverImage     String?
+  status         String      @default("DRAFT") // DRAFT | PUBLISHED (agendado = PUBLISHED com publishedAt futuro)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  categoryId     String?
+  category       Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  authorId       String?
+  author         TeamMember? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+model PracticeArea {
+  id              String       @id @default(cuid())
+  title           String
+  slug            String       @unique
+  icon            String       @default("Scale")
+  image           String?
+  summary         String       @default("")
+  description     String       @default("")
+  situations      String       @default("") // uma situação por linha
+  complementary   String       @default("")
+  order           Int          @default(0)
+  active          Boolean      @default(true)
+  showInQuoteForm Boolean      @default(true)
+  members         TeamMember[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model TeamMember {
+  id          String         @id @default(cuid())
+  name        String
+  role        String         @default("")
+  oab         String?
+  oabVerified Boolean        @default(false)
+  bio         String         @default("")
+  photo       String?
+  order       Int            @default(0)
+  published   Boolean        @default(false)
+  areas       PracticeArea[]
+  posts       Post[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  subject   String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
